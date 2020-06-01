@@ -1,5 +1,5 @@
 # OOP-java
-Some projects that implement Object Oriented Programming concepts
+implementing some Object Oriented Programming concepts
 
 
 In RMI folder i implemented a RMI client and server application that can
