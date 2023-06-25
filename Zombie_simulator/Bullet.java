@@ -6,11 +6,18 @@ import java.util.Iterator;
  *
  */
 
+public interface ZombieInteraction {
+    boolean checkCollisionWithZombies(Position bulletPosition, double collisionRange);
+}
+
 public class Bullet extends SimulationObject {
-    public Bullet(String name, Position position, double speed, Position direction) {
+    private ZombieInteraction zombieInteraction;
+
+    public Bullet(String name, Position position, double speed, Position direction, ZombieInteraction zombieInteraction) {
         super(name, position, speed);
         this.setDirection(direction);
         setType("bullet");
+        this.zombieInteraction = zombieInteraction;
     }
 
     @Override
@@ -30,7 +37,7 @@ public class Bullet extends SimulationObject {
                 return;
             }
 
-            if (checkCollisionWithZombies(controller)) {
+            if (checkCollisionWithZombies()) {
                 return;
             }
 
@@ -42,21 +49,8 @@ public class Bullet extends SimulationObject {
         this.setActive(false);
     }
 
-    private boolean checkCollisionWithZombies(SimulationController controller) {
-        Iterator<SimulationObject> iterator = controller.getZombies().iterator();
-
-        while (iterator.hasNext()) {
-            SimulationObject zombie = iterator.next();
-
-            if (this.getPosition().distance(zombie.getPosition()) <= zombie.getCollisionRange() && zombie.isActive()) {
-                System.out.println(this.getName() + " hit " + zombie.getName());
-                zombie.setActive(false);
-                this.setActive(false);
-                return true;
-            }
-        }
-
-        return false;
+    private boolean checkCollisionWithZombies() {
+        return zombieInteraction.checkCollisionWithZombies(this.getPosition(), this.getCollisionRange());
     }
 
     private void updatePosition() {
@@ -68,4 +62,3 @@ public class Bullet extends SimulationObject {
         return -1;
     }
 }
-

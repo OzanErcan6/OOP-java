@@ -6,13 +6,18 @@
  * To improve the code i could add bulletSpeed variable to the constructor instead of when creating bullet typing 100 for sniper for example.
  *
  */
+public interface ZombieInteraction {
+    SimulationObject calculateClosestZombie(List<SimulationObject> zombies, Position soldierPosition);
+}
+
 public class RegularSoldier extends SimulationObject {
     private SoldierState state;
     private SoldierType type;
     private double collisionRange;
     private double shootingRange;
+    private ZombieInteraction zombieInteraction;
 
-    public RegularSoldier(String name, Position position) {
+    public RegularSoldier(String name, Position position, ZombieInteraction zombieInteraction) {
         super(name, position, 5.0);
         this.state = SoldierState.SEARCHING;
         this.collisionRange = 2.0;
@@ -21,6 +26,7 @@ public class RegularSoldier extends SimulationObject {
         this.type = SoldierType.REGULAR;
         this.setActive(true);
         this.setDirection(Position.generateRandomDirection(true));
+        this.zombieInteraction = zombieInteraction;
     }
 
     @Override
@@ -59,7 +65,7 @@ public class RegularSoldier extends SimulationObject {
             System.out.println(this.getName() + " moved to " + this.getPosition().toString());
         }
 
-        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
+        SimulationObject closestZombie = zombieInteraction.calculateClosestZombie(controller.getZombies(), getPosition());
 
         if (closestZombie != null) {
             double distance = this.getPosition().distance(closestZombie.getPosition());
@@ -71,7 +77,7 @@ public class RegularSoldier extends SimulationObject {
     }
 
     private void handleAimingState(SimulationController controller) {
-        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
+        SimulationObject closestZombie = zombieInteraction.calculateClosestZombie(controller.getZombies(), getPosition());
 
         if (closestZombie != null) {
             double distance = this.getPosition().distance(closestZombie.getPosition());
@@ -99,7 +105,7 @@ public class RegularSoldier extends SimulationObject {
         controller.getBullets().add(newBullet);
         System.out.println(this.getName() + " fired " + newBullet.getName() + " to direction " + newBullet.getDirection().toString());
 
-        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
+        SimulationObject closestZombie = zombieInteraction.calculateClosestZombie(controller.getZombies(), getPosition());
         double distance = this.getPosition().distance(closestZombie.getPosition());
 
         if (distance <= this.shootingRange) {
@@ -121,21 +127,6 @@ public class RegularSoldier extends SimulationObject {
 
     private void changeDirection() {
         this.setDirection(Position.generateRandomDirection(true));
-    }
-
-    private SimulationObject calculateClosestZombie(List<SimulationObject> zombies) {
-        double closestDistance = Double.MAX_VALUE;
-        SimulationObject closestZombie = null;
-
-        for (SimulationObject zombie : zombies) {
-            double distance = this.getPosition().distance(zombie.getPosition());
-            if (distance != -1 && distance < closestDistance) {
-                closestDistance = distance;
-                closestZombie = zombie;
-            }
-        }
-
-        return closestZombie;
     }
 
     @Override
