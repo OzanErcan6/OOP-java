@@ -6,58 +6,59 @@ import java.util.Iterator;
  *
  */
 
-public class Bullet extends SimulationObject{
+public interface ZombieInteraction {
+    boolean checkCollisionWithZombies(Position bulletPosition, double collisionRange);
+}
 
-    public Bullet(String name, Position position, double speed,Position direction) {
+public class Bullet extends SimulationObject {
+    private ZombieInteraction zombieInteraction;
+
+    public Bullet(String name, Position position, double speed, Position direction, ZombieInteraction zombieInteraction) {
         super(name, position, speed);
         this.setDirection(direction);
         setType("bullet");
+        this.zombieInteraction = zombieInteraction;
     }
 
-    /**
-     *firstly check if the bullet is active
-     * also check if the simulation is over
-     * i checked for every zombie in the zombie list from controller
-     */
     @Override
     public void step(SimulationController controller) {
-        if(!this.isActive()){
+        if (!this.isActive()) {
             return;
         }
 
-        if(controller.isFinished())
+        if (controller.isFinished()) {
             return;
+        }
 
-        for (int x=0 ;x<=this.getSpeed();x++){
-
-            if(!this.isInBound(controller,this.getPosition())){
-                System.out.println(this.getName()+" moved out of bounds");
+        for (int x = 0; x <= this.getSpeed(); x++) {
+            if (!this.isInBound(controller, this.getPosition())) {
+                System.out.println(this.getName() + " moved out of bounds");
                 this.setActive(false);
                 return;
             }
-            Iterator<SimulationObject> iterator= controller.getZombies().iterator();
 
-            while (iterator.hasNext()){
-                SimulationObject zombie = iterator.next();
-
-                if(this.getPosition().distance(zombie.getPosition())<=zombie.getCollisionRange() && zombie.isActive()){
-                    System.out.println(this.getName()+" hit "+zombie.getName());
-                    zombie.setActive(false);
-                    this.setActive(false);
-                    return;
-                }
+            if (checkCollisionWithZombies()) {
+                return;
             }
 
-            Position newPos = new Position(this.getPosition().getX()+this.getDirection().getX(),this.getPosition().getY()+this.getDirection().getY());
-            this.setPosition(newPos);
+            updatePosition();
             x++;
+        }
 
-            }
-        System.out.println(this.getName()+" dropped to the ground at "+this.getPosition().toString());
+        System.out.println(this.getName() + " dropped to the ground at " + this.getPosition().toString());
         this.setActive(false);
+    }
 
-}
-    public double getCollisionRange(){return -1;}
+    private boolean checkCollisionWithZombies() {
+        return zombieInteraction.checkCollisionWithZombies(this.getPosition(), this.getCollisionRange());
+    }
 
+    private void updatePosition() {
+        Position newPos = new Position(this.getPosition().getX() + this.getDirection().getX(), this.getPosition().getY() + this.getDirection().getY());
+        this.setPosition(newPos);
+    }
 
+    public double getCollisionRange() {
+        return -1;
+    }
 }

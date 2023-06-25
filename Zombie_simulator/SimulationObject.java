@@ -23,6 +23,16 @@ public abstract class SimulationObject {
         this.active = true;
     }
 
+    public abstract void step(SimulationController controller);
+
+    public boolean isInBound(SimulationController controller, Position position) {
+        if (position.getX() > controller.getWidth() || position.getX() < 0) return false;
+        if (position.getY() > controller.getHeight() || position.getY() < 0) return false;
+        return true;
+    }
+
+    public abstract double getCollisionRange();
+
     public String getName() {
         return name;
     }

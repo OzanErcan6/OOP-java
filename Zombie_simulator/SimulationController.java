@@ -11,6 +11,53 @@ import java.util.Vector;
  * Furthermore i can add new soldier or zombie classes to the program with implementing common functions
  *
  */
+
+public class ZombieSimulationStrategy implements SimulationStrategy {
+    @Override
+    public void step(SimulationController controller) {
+        // Lógica específica de la simulación de zombies
+        // ...
+    }
+
+    @Override
+    public void addObject(SimulationObject obj, SimulationController controller) {
+        controller.getZombies().add(obj);
+    }
+
+    @Override
+    public void removeObject(SimulationObject obj, SimulationController controller) {
+        controller.getZombies().remove(obj);
+    }
+
+    @Override
+    public boolean isFinished(SimulationController controller) {
+        return controller.getZombies().isEmpty();
+    }
+}
+
+public class SoldierSimulationStrategy implements SimulationStrategy {
+    @Override
+    public void step(SimulationController controller) {
+        // Lógica específica de la simulación de soldados
+        // ...
+    }
+
+    @Override
+    public void addObject(SimulationObject obj, SimulationController controller) {
+        controller.getSoldiers().add(obj);
+    }
+
+    @Override
+    public void removeObject(SimulationObject obj, SimulationController controller) {
+        controller.getSoldiers().remove(obj);
+    }
+
+    @Override
+    public boolean isFinished(SimulationController controller) {
+        return controller.getSoldiers().isEmpty() && controller.getBullets().isEmpty();
+    }
+}
+ 
 public class SimulationController {
     private final double height;
     private final double width;

@@ -5,6 +5,27 @@ import java.util.Iterator;
  * other than that soldiers and zombies constructors and functions similar with each other
  * Also i can change collisionRange , starting state etc from constructor easily
  */
+
+public interface ZombieState {
+    void step(RegularZombie zombie, SimulationController controller);
+}
+
+public class WanderingState implements ZombieState {
+    @Override
+    public void step(RegularZombie zombie, SimulationController controller) {
+        // Lógica específica del estado de "wandering"
+        // ...
+    }
+}
+
+public class FollowingState implements ZombieState {
+    @Override
+    public void step(RegularZombie zombie, SimulationController controller) {
+        // Lógica específica del estado de "following"
+        // ...
+    }
+}
+
 public class RegularZombie extends SimulationObject {
 
     private ZombieState state;
