@@ -12,114 +12,130 @@ public class RegularSoldier extends SimulationObject {
     private double collisionRange;
     private double shootingRange;
 
-    public RegularSoldier(String name, Position position) { // DO NOT CHANGE PARAMETERS
-        super(name,position,5.0);
-        this.state=SoldierState.SEARCHING;
-        this.collisionRange=2.0;
-        this.shootingRange=20.0;
+    public RegularSoldier(String name, Position position) {
+        super(name, position, 5.0);
+        this.state = SoldierState.SEARCHING;
+        this.collisionRange = 2.0;
+        this.shootingRange = 20.0;
         setType("soldier");
-        this.type=SoldierType.REGULAR;
+        this.type = SoldierType.REGULAR;
         this.setActive(true);
         this.setDirection(Position.generateRandomDirection(true));
     }
 
     @Override
     public void step(SimulationController controller) {
-        if(!this.isActive()) {
+        if (!this.isActive()) {
             return;
         }
 
+        if (controller.isFinished()) {
+            return;
+        }
 
-       /*   – Calculate the next position of the soldier with formula:
-                    new_position = position + direction ∗ speed
-            – If the position is out of bounds, change direction to random value
-            – If the position is not out of bounds, change soldier position to the new_position.*/
-        if (this.state == SoldierState.SEARCHING) {
-            Position new_position = new Position(this.getPosition().getX() + this.getDirection().getX() * this.getSpeed(), this.getPosition().getY() + this.getDirection().getY() * this.getSpeed());
-            if (!this.isInBound(controller, new_position)) {
-                this.setDirection(Position.generateRandomDirection(true));
-                System.out.println(this.getName()+" changed direction to "+this.getDirection().toString());
+        switch (state) {
+            case SEARCHING:
+                handleSearchingState(controller);
+                break;
+            case AIMING:
+                handleAimingState(controller);
+                break;
+            case SHOOTING:
+                handleShootingState(controller);
+                break;
+        }
+    }
 
-            }
-            if (isInBound(controller, new_position)) {
-                setPosition(new_position);
-                System.out.println(this.getName()+" moved to "+this.getPosition().toString());
+    private void handleSearchingState(SimulationController controller) {
+        Position newPosition = calculateNewPosition();
 
-            }
+        if (!isInBound(controller, newPosition)) {
+            changeDirection();
+            System.out.println(this.getName() + " changed direction to " + this.getDirection().toString());
+        }
 
-        /*– Calculate the euclidean distance (3.1.2) to the closest zombie.
-          – If the distance is shorter than or equal to the shooting range of the soldier, change state to AIMING.*/
+        if (isInBound(controller, newPosition)) {
+            setPosition(newPosition);
+            System.out.println(this.getName() + " moved to " + this.getPosition().toString());
+        }
 
-        SimulationObject closeZombie = this.calculateCloserZombie(controller.getZombies());
-        double distance = -1;
-        Position position;
-        if (closeZombie != null) {
-            distance = this.getPosition().distance(closeZombie.getPosition());
+        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
+
+        if (closestZombie != null) {
+            double distance = this.getPosition().distance(closestZombie.getPosition());
             if (distance != -1 && distance <= this.shootingRange) {
                 state = SoldierState.AIMING;
-                System.out.println(this.getName()+" changed state to "+this.state.toString());
+                System.out.println(this.getName() + " changed state to " + this.state.toString());
             }
         }
-        return;
-        }
-        ///////////////////AIMING/////////////////////////////////
-        /*– Calculate the euclidean distance (3.1.2) to the closest zombie.
-          – If the distance is shorter than or equal to the shooting range of the soldier, change soldier
-            direction to zombie and change state to SHOOTING. Do not forget to normalize the direction.
-            If not, change state to SEARCHING*/
-        if (this.state == SoldierState.AIMING) {
-            SimulationObject closeZombie = this.calculateCloserZombie(controller.getZombies());
-            double distance ;
+    }
 
-            if (closeZombie != null) {
-                distance = this.getPosition().distance(closeZombie.getPosition());
-                Position x = new Position(closeZombie.getPosition().getX() - this.getPosition().getX(), closeZombie.getPosition().getY() - this.getPosition().getY());
-                x.normalize();
+    private void handleAimingState(SimulationController controller) {
+        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
 
-                //change soldier direction to zombie, change state to SHOOTING and return
-                if (distance <= this.shootingRange) {
-                    this.setDirection(x);
-                    System.out.println(this.getName()+" changed direction to "+this.getDirection().toString());
-                    state = SoldierState.SHOOTING;
-                    System.out.println(this.getName()+" changed state to "+this.state.toString());
+        if (closestZombie != null) {
+            double distance = this.getPosition().distance(closestZombie.getPosition());
+            Position directionToZombie = new Position(closestZombie.getPosition().getX() - this.getPosition().getX(), closestZombie.getPosition().getY() - this.getPosition().getY());
+            directionToZombie.normalize();
 
-                }
-            }
-            else{
+            if (distance <= this.shootingRange) {
+                this.setDirection(directionToZombie);
+                System.out.println(this.getName() + " changed direction to " + this.getDirection().toString());
+                state = SoldierState.SHOOTING;
+                System.out.println(this.getName() + " changed state to " + this.state.toString());
+            } else {
                 state = SoldierState.SEARCHING;
-                System.out.println(this.getName()+" changed state to "+this.state.toString());
-
+                System.out.println(this.getName() + " changed state to " + this.state.toString());
             }
-            return;
+        } else {
+            state = SoldierState.SEARCHING;
+            System.out.println(this.getName() + " changed state to " + this.state.toString());
+        }
+    }
+
+    private void handleShootingState(SimulationController controller) {
+        Integer bulletNo = controller.getNewBullet();
+        SimulationObject newBullet = new Bullet("Bullet" + bulletNo.toString(), this.getPosition(), 40, this.getDirection());
+        controller.getBullets().add(newBullet);
+        System.out.println(this.getName() + " fired " + newBullet.getName() + " to direction " + newBullet.getDirection().toString());
+
+        SimulationObject closestZombie = calculateClosestZombie(controller.getZombies());
+        double distance = this.getPosition().distance(closestZombie.getPosition());
+
+        if (distance <= this.shootingRange) {
+            this.state = SoldierState.AIMING;
+            System.out.println(this.getName() + " changed state to " + this.state.toString());
+        } else {
+            changeDirection();
+            System.out.println(this.getName() + " changed direction to " + this.getDirection().toString());
+            this.state = SoldierState.SEARCHING;
+            System.out.println(this.getName() + " changed state to " + this.state.toString());
+        }
+    }
+
+    private Position calculateNewPosition() {
+        double newX = this.getPosition().getX() + this.getDirection().getX() * this.getSpeed();
+        double newY = this.getPosition().getY() + this.getDirection().getY() * this.getSpeed();
+        return new Position(newX, newY);
+    }
+
+    private void changeDirection() {
+        this.setDirection(Position.generateRandomDirection(true));
+    }
+
+    private SimulationObject calculateClosestZombie(List<SimulationObject> zombies) {
+        double closestDistance = Double.MAX_VALUE;
+        SimulationObject closestZombie = null;
+
+        for (SimulationObject zombie : zombies) {
+            double distance = this.getPosition().distance(zombie.getPosition());
+            if (distance != -1 && distance < closestDistance) {
+                closestDistance = distance;
+                closestZombie = zombie;
+            }
         }
 
-/*– Create a bullet. As mentioned before, bullet’s position and direction should be same as sol-
-dier’s. Speed depends on the soldier which for RegularSoldier is 40.0. Add the bullet to the
-simulation after all step function are executed.
-– Calculate the euclidean distance (3.1.2) to the closest zombie.
-– If the distance is shorter than or equal to the shooting range of the soldier, change state to
-AIMING.
-– If not, randomly change soldier direction and change state to SEARCHING.*/
-        if (this.state == SoldierState.SHOOTING){
-            Integer bulletNo = controller.getNewBullet();
-            SimulationObject newBullet = new Bullet("Bullet"+bulletNo.toString(),this.getPosition(),40,this.getDirection());
-            controller.getBullets().add(newBullet);
-            System.out.println(this.getName()+" fired "+newBullet.getName() +" to direction "+newBullet.getDirection().toString());
-
-            SimulationObject closerZombie = calculateCloserZombie(controller.getZombies());
-            double distance = this.getPosition().distance(closerZombie.getPosition());
-            if(distance<=this.shootingRange){
-                this.state=SoldierState.AIMING;
-                System.out.println(this.getName()+" changed state to "+this.state.toString());
-                return;}
-            else{
-                this.setDirection(Position.generateRandomDirection(true));
-                System.out.println(this.getName()+" changed direction to "+this.getDirection().toString());
-                this.state=SoldierState.SEARCHING;
-                System.out.println(this.getName()+" changed state to "+this.state.toString());
-                return;
-            }
-        }
+        return closestZombie;
     }
 
     @Override
@@ -127,11 +143,9 @@ AIMING.
         return "soldier";
     }
 
-
     public SoldierType getSoldierType() {
         return this.type;
     }
-
 
     @Override
     public double getCollisionRange() {
