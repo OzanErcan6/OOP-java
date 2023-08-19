@@ -2,9 +2,11 @@ import java.util.Iterator;
 import java.util.Vector;
 
 /**
- *calculateCloserZombie method finds the closer zombie or soldier depending on you input list
+ * calculateCloserZombie method finds the closer zombie or soldier depending on
+ * you input list
  * (if you give soldier list it finds closer Soldier)
- * also i save objects' general types which are "soldier","zombie" or "bullet" in this class because it is common.
+ * also i save objects' general types which are "soldier","zombie" or "bullet"
+ * in this class because it is common.
  */
 public abstract class SimulationObject {
     private final String name;
@@ -13,14 +15,23 @@ public abstract class SimulationObject {
     private final double speed;
     private boolean active;
     private String generalType;
+    private double collisionRange;
 
-
-    public SimulationObject(String name, Position position, double speed) {
+    public SimulationObject(String name, Position position, double speed, double collisionRange) {
         this.name = name;
         this.position = position;
         this.speed = speed;
         this.direction = null;
         this.active = true;
+        this.collisionRange = collisionRange;
+    }
+
+    public double getCollisionRange() {
+        return collisionRange;
+    }
+
+    public void setCollisionRange(Position position) {
+        this.collisionRange = collisionRange;
     }
 
     public String getName() {
@@ -30,6 +41,7 @@ public abstract class SimulationObject {
     public Position getPosition() {
         return position;
     }
+
     public void setPosition(Position position) {
         this.position = position;
     }
@@ -56,29 +68,35 @@ public abstract class SimulationObject {
 
     public abstract void step(SimulationController controller);
 
-    public boolean isInBound(SimulationController controller,Position position){
+    public boolean isInBound(SimulationController controller, Position position) {
 
-        if(position.getX() > controller.getWidth() || position.getX() < 0) return false;
-        if(position.getY() > controller.getHeight() || position.getY() < 0) return false;
+        if (position.getX() > controller.getWidth() || position.getX() < 0)
+            return false;
+        if (position.getY() > controller.getHeight() || position.getY() < 0)
+            return false;
         return true;
     }
-    public void setType(String x){
-        generalType=x;
+
+    public void setType(String x) {
+        generalType = x;
     }
 
-    public String getType(){return generalType;}
+    public String getType() {
+        return generalType;
+    }
 
-    public  SimulationObject calculateCloserZombie(Vector<SimulationObject> zombies) {
-        if (zombies.isEmpty()) return null;
+    public SimulationObject calculateCloserZombie(Vector<SimulationObject> zombies) {
+        if (zombies.isEmpty())
+            return null;
 
-        SimulationObject zombie1 =null;
+        SimulationObject zombie1 = null;
         double min = Double.MAX_VALUE;
 
-        Iterator<SimulationObject> iterator= zombies.iterator();
+        Iterator<SimulationObject> iterator = zombies.iterator();
 
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             SimulationObject z = iterator.next();
-            if(z.isActive()) {
+            if (z.isActive()) {
                 double distance = this.getPosition().distance(z.getPosition());
                 if (distance < min && z.isActive()) {
                     min = distance;
@@ -89,6 +107,5 @@ public abstract class SimulationObject {
         return zombie1;
     }
 
-
-    public abstract double getCollisionRange();
+    // public abstract double getCollisionRange();
 }
